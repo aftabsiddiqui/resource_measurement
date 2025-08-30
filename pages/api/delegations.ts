@@ -1,6 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { SimpleDataStore } from '../../lib/simpleDataStore';
 
+// Increase response limit for large delegation data
+export const config = {
+  api: {
+    responseLimit: '50mb',
+  },
+}
+
 export interface DelegationSummaryResponse {
   success: boolean;
   data?: {

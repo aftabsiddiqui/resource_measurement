@@ -8,6 +8,13 @@ export interface DataUpdateResponse {
   error?: string;
 }
 
+// Disable response size limit for large data operations
+export const config = {
+  api: {
+    responseLimit: '50mb',
+  },
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<DataUpdateResponse>

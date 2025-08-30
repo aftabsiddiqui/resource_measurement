@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Papa from 'papaparse';
+import axios from 'axios';
 
 const dataDir = path.join(process.cwd(), 'data');
 const delegationsFile = path.join(dataDir, 'delegations.json');
@@ -222,22 +223,57 @@ export class SimpleDataStore {
     try {
       console.log('Starting data fetch from RIR NRO stats...');
       
-      // Check if we already updated today
-      const today = new Date().toISOString().split('T')[0];
-      const lastUpdate = await this.getLastUpdateDate();
-      
-      if (lastUpdate === today) {
-        console.log('Data already updated today, skipping fetch');
-        return { success: true, recordsCount: 0 };
-      }
+      // Always fetch fresh data on startup - removed daily check
+      console.log('Fetching fresh data from RIR sources...');
 
-      // Fetch data from the URL
-      const response = await fetch('https://ftp.ripe.net/pub/stats/ripencc/nro-stats/latest/nro-delegated-stats');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // Fetch data from the URL using axios with streaming
+      console.log('Fetching data with axios streaming...');
+      const response = await axios.get('https://ftp.ripe.net/pub/stats/ripencc/nro-stats/latest/nro-delegated-stats', {
+        headers: {
+          'User-Agent': 'curl/8.0.0',
+          'Accept': 'text/plain, application/octet-stream',
+          'Cache-Control': 'no-cache'
+        },
+        timeout: 120000, // 2 minute timeout
+        responseType: 'stream', // Use streaming for large files
+        maxContentLength: 100 * 1024 * 1024, // 100MB limit
+        maxBodyLength: 100 * 1024 * 1024
+      });
 
-      const text = await response.text();
+      const contentLength = parseInt(response.headers['content-length'] || '0');
+      console.log(`Connected successfully. Content-Length: ${contentLength ? Math.round(contentLength / 1024 / 1024) + 'MB' : 'unknown'}`);
+
+      // Collect streamed data
+      const text = await new Promise<string>((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
+        let lastProgressTime = Date.now();
+
+        response.data.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+          totalSize += chunk.length;
+          
+          // Log progress every 10MB or every 30 seconds
+          const now = Date.now();
+          if (totalSize % (10 * 1024 * 1024) < chunk.length || (now - lastProgressTime) > 30000) {
+            const progress = contentLength ? Math.round((totalSize / contentLength) * 100) : 0;
+            console.log(`Progress: ${Math.round(totalSize / 1024 / 1024)}MB${contentLength ? ` / ${Math.round(contentLength / 1024 / 1024)}MB (${progress}%)` : ''}...`);
+            lastProgressTime = now;
+          }
+        });
+
+        response.data.on('end', () => {
+          const totalMB = Math.round(totalSize / 1024 / 1024);
+          console.log(`Download completed successfully: ${totalMB}MB`);
+          const data = Buffer.concat(chunks).toString('utf-8');
+          resolve(data);
+        });
+
+        response.data.on('error', (error: any) => {
+          reject(error);
+        });
+      });
+
       console.log('Data fetched successfully, parsing...');
 
       // Parse CSV data
@@ -286,6 +322,7 @@ export class SimpleDataStore {
       await this.storeDelegations(delegationRecords);
       
       // Record the update
+      const today = new Date().toISOString().split('T')[0];
       await this.recordUpdate(today, delegationRecords.length, 'success');
 
       console.log(`Successfully stored ${delegationRecords.length} records`);

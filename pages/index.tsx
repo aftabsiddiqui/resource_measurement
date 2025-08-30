@@ -67,15 +67,27 @@ export default function Home() {
 
   const checkDataStatus = async () => {
     try {
-      const response = await fetch('/api/delegations?rir=ARIN&country=US&yearStart=2024&yearEnd=2024');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('/api/delegations?rir=ARIN&country=US&yearStart=2024&yearEnd=2024', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       const result = await response.json();
+      
       if (result.success && result.data && result.data.length > 0) {
         setDataStatus(`Data ready (${result.data.length} records available)`);
       } else {
         setDataStatus("No data available - initializing in background");
       }
     } catch (err) {
-      setDataStatus("Data service initializing...");
+      if (err instanceof Error && err.name === 'AbortError') {
+        setDataStatus("Data service timeout - retrying...");
+      } else {
+        setDataStatus("Data service initializing...");
+      }
     }
   };
 
@@ -91,7 +103,14 @@ export default function Home() {
         yearEnd
       });
 
-      const response = await fetch(`/api/delegations?${params}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(`/api/delegations?${params}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       const result = await response.json();
 
       if (!response.ok || !result.success) {
@@ -104,7 +123,11 @@ export default function Home() {
       setShowTable(false);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout: The operation is taking too long. Please try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
       console.error('Error fetching delegation data:', err);
     } finally {
       setLoading(false);
