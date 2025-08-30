@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Papa from "papaparse";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -42,14 +41,12 @@ interface PrefixMap {
 }
 
 export default function Home() {
-  const [data, setData] = useState<string[][]>([]);
   const [rir, setRir] = useState("apnic");
   const [country, setCountry] = useState("PK");
   const [yearStart, setYearStart] = useState("2024");
   const [yearEnd, setYearEnd] = useState("2025");
   const [summary, setSummary] = useState<Record<string, SummaryData>>({});
   const [delegatedPrefixes, setDelegatedPrefixes] = useState<PrefixMap>({});
-  const [prefixStatuses, setPrefixStatuses] = useState({});
   const [totalSummary, setTotalSummary] = useState<TotalSummary>({
     asn: 0,
     ipv4: 0,
@@ -59,93 +56,63 @@ export default function Home() {
   const [showASN, setShowASN] = useState(true);
   const [showIPv4, setShowIPv4] = useState(true);
   const [showIPv6, setShowIPv6] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [dataStatus, setDataStatus] = useState<string>("Checking data status...");
 
+  // Check data status on component mount
   useEffect(() => {
-    fetch(
-      "https://ftp.ripe.net/pub/stats/ripencc/nro-stats/latest/nro-delegated-stats"
-    )
-      .then((res) => res.text())
-      .then((text) => {
-        const parsed = Papa.parse(text, {
-          delimiter: "|",
-          skipEmptyLines: true,
-        });
-        setData(parsed.data as string[][]);
-      });
+    checkDataStatus();
   }, []);
 
-  const process = () => {
-    const prefixMap: PrefixMap = {};
-    if (!data || data.length === 0) return;
-    const start = parseInt(yearStart);
-    const end = parseInt(yearEnd);
-
-    const entitiesInRange = new Set<string>();
-    const allDelegations: Record<string, TotalSummary> = {};
-    const priorFlags: Record<string, { asn: boolean; ipv4: boolean; ipv6: boolean }> = {};
-
-    data.forEach((row) => {
-      const [r, cc, type, value, size, date, status, entity] = row;
-      if (r !== rir.toLowerCase() || cc !== country.toUpperCase()) return;
-      const y = parseInt(date.substring(0, 4));
-      if (y >= start && y <= end) entitiesInRange.add(entity);
-    });
-
-    data.forEach((row) => {
-      const [r, cc, type, value, size, date, status, entity] = row;
-      if (!entitiesInRange.has(entity)) return;
-      const y = parseInt(date.substring(0, 4));
-      allDelegations[entity] = allDelegations[entity] || {
-        asn: 0,
-        ipv4: 0,
-        ipv6: 0,
-      };
-      priorFlags[entity] = priorFlags[entity] || {
-        asn: false,
-        ipv4: false,
-        ipv6: false,
-      };
-
-      if (type === "asn") {
-        allDelegations[entity].asn += parseInt(size);
-        if (y < start) priorFlags[entity].asn = true;
-      } else if (type === "ipv4") {
-        allDelegations[entity].ipv4 += 1;
-        prefixMap[entity] = prefixMap[entity] || { ipv4: [], ipv6: [] };
-        prefixMap[entity].ipv4.push(
-          `${value}/${Math.log2(256 / parseInt(size))}`
-        );
-        if (y < start) priorFlags[entity].ipv4 = true;
-      } else if (type === "ipv6") {
-        allDelegations[entity].ipv6 += 1;
-        if (y < start) priorFlags[entity].ipv6 = true;
-        prefixMap[entity] = prefixMap[entity] || { ipv4: [], ipv6: [] };
-        prefixMap[entity].ipv6.push(`${value}/${size}`);
+  const checkDataStatus = async () => {
+    try {
+      const response = await fetch('/api/delegations?rir=ARIN&country=US&yearStart=2024&yearEnd=2024');
+      const result = await response.json();
+      if (result.success && result.data && result.data.length > 0) {
+        setDataStatus(`Data ready (${result.data.length} records available)`);
+      } else {
+        setDataStatus("No data available - initializing in background");
       }
-    });
+    } catch (err) {
+      setDataStatus("Data service initializing...");
+    }
+  };
 
-    const result: Record<string, SummaryData> = {};
-    Object.entries(allDelegations).forEach(([ent, vals]) => {
-      result[ent] = {
-        asn: `${vals.asn}${priorFlags[ent].asn ? "*" : ""}`,
-        ipv4: `${vals.ipv4}${priorFlags[ent].ipv4 ? "*" : ""}`,
-        ipv6: `${vals.ipv6}${priorFlags[ent].ipv6 ? "*" : ""}`,
-        hasPrior: Object.values(priorFlags[ent]).some(Boolean),
-      };
-    });
+  const fetchDelegationData = async () => {
+    setLoading(true);
+    setError("");
+    
+    try {
+      const params = new URLSearchParams({
+        rir,
+        country,
+        yearStart,
+        yearEnd
+      });
 
-    setSummary(result);
-    setDelegatedPrefixes(prefixMap);
-    setShowTable(false);
+      const response = await fetch(`/api/delegations?${params}`);
+      const result = await response.json();
 
-    // Total summary
-    const totals = { asn: 0, ipv4: 0, ipv6: 0 };
-    Object.values(result).forEach((vals) => {
-      totals.asn += parseInt(vals.asn);
-      totals.ipv4 += parseInt(vals.ipv4);
-      totals.ipv6 += parseInt(vals.ipv6);
-    });
-    setTotalSummary(totals);
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to fetch data');
+      }
+
+      setSummary(result.data.summary);
+      setTotalSummary(result.data.totalSummary);
+      setDelegatedPrefixes(result.data.delegatedPrefixes);
+      setShowTable(false);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching delegation data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const process = () => {
+    fetchDelegationData();
   };
 
   const generateChartData = () => {
@@ -200,6 +167,24 @@ export default function Home() {
       
       <div style={{ padding: "20px" }}>
         <h1>RIR Delegation Summary</h1>
+        
+        {/* Data Status */}
+        <div style={{ 
+          marginBottom: "20px", 
+          padding: "10px", 
+          backgroundColor: "#f8f9fa", 
+          border: "1px solid #dee2e6",
+          borderRadius: "4px"
+        }}>
+          <div style={{ fontSize: "14px", color: "#28a745", fontStyle: "italic" }}>
+            Status: {dataStatus}
+          </div>
+          <div style={{ fontSize: "12px", color: "#6c757d", marginTop: "5px" }}>
+            Data is automatically updated daily. The system fetches the latest delegation records in the background.
+          </div>
+        </div>
+
+        {/* Query Parameters */}
         <div>
           <label>
             RIR: <input value={rir} onChange={(e) => setRir(e.target.value)} />
@@ -219,16 +204,50 @@ export default function Home() {
             End Year:{" "}
             <input value={yearEnd} onChange={(e) => setYearEnd(e.target.value)} />
           </label>
-          <button style={{ marginLeft: "10px" }} onClick={process}>
-            Process
+          <button 
+            style={{ 
+              marginLeft: "10px",
+              padding: "8px 16px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }} 
+            onClick={process}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Process"}
           </button>
           <button
-            style={{ marginLeft: "10px" }}
+            style={{ 
+              marginLeft: "10px",
+              padding: "8px 16px",
+              backgroundColor: "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
             onClick={() => setShowTable(!showTable)}
           >
             {showTable ? "Hide Table" : "Show Table"}
           </button>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div style={{
+            marginTop: "10px",
+            padding: "10px",
+            backgroundColor: "#f8d7da",
+            border: "1px solid #f5c6cb",
+            borderRadius: "4px",
+            color: "#721c24"
+          }}>
+            Error: {error}
+          </div>
+        )}
 
         <div style={{ marginTop: "10px" }}>
           <label>

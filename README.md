@@ -1,12 +1,15 @@
 # Resource Measurement - Next.js Application
 
-This application has been successfully converted from Create React App to Next.js latest version.
+This application has been successfully converted from Create React App to Next.js latest version with a robust backend architecture.
 
 ## Features
 
 - **RIR Delegation Summary**: Analyze and visualize delegation data from Regional Internet Registries (RIRs)
 - **Interactive Charts**: View delegation data through interactive charts using Chart.js
 - **Data Processing**: Parse and process delegation statistics with configurable parameters
+- **JSON-Based Storage**: Efficient JSON file storage for fast data retrieval
+- **Automated Data Updates**: Daily automatic data synchronization from RIR sources
+- **API-First Architecture**: RESTful APIs for data management and retrieval
 - **Responsive Design**: Modern responsive interface built with Next.js
 
 ## Technologies Used
@@ -16,6 +19,33 @@ This application has been successfully converted from Create React App to Next.j
 - **TypeScript** - Type-safe JavaScript development
 - **Chart.js** - Interactive charts and data visualization
 - **Papa Parse** - CSV parsing for delegation data
+- **Node-cron** - Task scheduling for automated data updates
+
+## Architecture Overview
+
+### Backend Services
+
+1. **Data Store Layer** (`lib/simpleDataStore.ts`)
+   - JSON-based file storage with optimized structure for delegation data
+   - Efficient data organization for fast queries
+   - Support for complex filtering and aggregation
+
+2. **Automated Data Management**
+   - Automated data fetching from RIR NRO stats
+   - Data parsing and validation
+   - Bulk database operations
+
+3. **Cron Service** (`lib/cronService.ts`)
+   - Daily data synchronization at 2 AM UTC
+   - Background task management
+   - Error handling and logging
+
+### API Routes
+
+- `GET /api/delegations` - Retrieve processed delegation data
+- `POST /api/update-data` - Manually trigger data update
+- `GET /api/update-data` - Check update status
+- `POST /api/init` - Initialize background services
 
 ## Getting Started
 
@@ -44,6 +74,10 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+5. Initialize the application:
+   - Click "Initialize Application" to start background services
+   - This will create the database and start daily data sync
+
 ### Available Scripts
 
 - `npm run dev` - Start the development server
@@ -53,13 +87,28 @@ npm run dev
 
 ## Application Usage
 
+### Automatic Setup
+
+The application automatically handles all setup when you visit the website:
+
+1. **Auto-Initialization**: The system automatically:
+   - Creates the JSON data store
+   - Starts background cron jobs  
+   - Fetches initial data from RIR sources
+
+2. **Background Updates**: The system automatically:
+   - Updates data daily at 2 AM UTC
+   - Maintains fresh delegation records without user intervention
+
+### Data Analysis
+
 1. **Configure Parameters**:
-   - Select RIR (Regional Internet Registry)
-   - Choose country code
+   - Select RIR (Regional Internet Registry): apnic, ripe, arin, lacnic, afrinic
+   - Choose country code (ISO 2-letter format)
    - Set start and end years for analysis
 
 2. **Process Data**:
-   - Click "Process" to fetch and analyze delegation data
+   - Click "Process" to analyze delegation data from the JSON store
    - View summary statistics for ASN, IPv4, and IPv6 delegations
 
 3. **Visualize Results**:
@@ -67,67 +116,102 @@ npm run dev
    - View interactive bar charts
    - Show/hide detailed data tables
 
-## Architecture Changes
+## Database Schema
 
-### From Create React App to Next.js
+### Delegations Table
+- `rir`: Regional Internet Registry
+- `country_code`: ISO country code
+- `type`: Delegation type (asn, ipv4, ipv6)
+- `value`: Resource value (IP address, ASN number)
+- `size`: Resource size
+- `date`: Delegation date
+- `status`: Delegation status
+- `entity`: Entity responsible for the delegation
 
-The application has been migrated from Create React App to Next.js with the following key changes:
+### Data Updates Table
+- Tracks daily update operations
+- Stores update status and record counts
+- Enables monitoring of data freshness
 
-1. **Project Structure**:
-   - Moved from `src/` to `pages/` directory structure
-   - Added Next.js configuration files
-   - Implemented proper TypeScript support
+## API Documentation
 
-2. **Routing**:
-   - Migrated to Next.js file-based routing
-   - Added `_app.tsx` and `_document.tsx` for custom app structure
+### GET /api/delegations
 
-3. **Build System**:
-   - Replaced react-scripts with Next.js build system
-   - Updated package.json scripts
-   - Added ESLint configuration for Next.js
+Retrieve processed delegation data for analysis.
 
-4. **Performance Improvements**:
-   - Automatic code splitting
-   - Optimized bundle sizes
-   - Built-in image optimization support
+**Parameters:**
+- `rir` (string): Regional Internet Registry
+- `country` (string): Country code
+- `yearStart` (number): Start year for analysis
+- `yearEnd` (number): End year for analysis
 
-5. **SEO & Accessibility**:
-   - Added proper meta tags and page titles
-   - Improved semantic HTML structure
-   - Better social media sharing support
-
-## File Structure
-
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "summary": { "entity": { "asn": "5*", "ipv4": "10", "ipv6": "2*", "hasPrior": true } },
+    "totalSummary": { "asn": 5, "ipv4": 10, "ipv6": 2 },
+    "delegatedPrefixes": { "entity": { "ipv4": ["192.0.2.0/24"], "ipv6": ["2001:db8::/32"] } }
+  }
+}
 ```
-├── pages/
-│   ├── _app.tsx          # Custom App component
-│   ├── _document.tsx     # Custom Document structure
-│   └── index.tsx         # Main application page
-├── components/           # Reusable React components
-├── public/              # Static assets
-├── src/
-│   └── styles.css       # Global styles
-├── next.config.js       # Next.js configuration
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Dependencies and scripts
+
+### POST /api/update-data
+
+Manually trigger data update from RIR sources.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Data updated successfully",
+  "recordsCount": 150000
+}
 ```
+
+### POST /api/init
+
+Initialize background services and database.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Application initialized successfully"
+}
+```
+
+## Performance Optimizations
+
+- **Database Indexing**: Optimized indexes for fast filtering and aggregation
+- **Bulk Operations**: Efficient batch processing for large datasets
+- **Caching**: Query result optimization for repeated requests
+- **Incremental Updates**: Only fetch new data when needed
+
+## Deployment Considerations
+
+1. **Data Storage**: JSON files will be created in `/data` directory
+2. **Cron Jobs**: Automatic start in production environment  
+3. **File Permissions**: Ensure write access to data directory
+4. **Monitoring**: Check logs for daily update status
 
 ## Future Enhancements
 
-- Add API routes for server-side data processing
-- Implement data caching with Next.js built-in features
-- Add more visualization options
-- Implement export functionality for charts and data
-- Add dark mode support
-- Implement responsive mobile design improvements
+- Add Redis caching for improved performance
+- Implement database migrations for schema updates
+- Add monitoring and alerting for failed updates
+- Support for multiple data sources
+- Historical data analysis and trends
+- Export functionality for charts and data
+- User authentication and role-based access
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Test thoroughly including API endpoints
 5. Submit a pull request
 
 ## License
