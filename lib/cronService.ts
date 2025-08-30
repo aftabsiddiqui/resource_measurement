@@ -70,6 +70,10 @@ class CronService {
     const job = this.jobs.get(jobName);
     return job ? true : false;
   }
+
+  isJobActive(jobName: string): boolean {
+    return this.getJobStatus(jobName);
+  }
 }
 
 export const cronService = CronService.getInstance();

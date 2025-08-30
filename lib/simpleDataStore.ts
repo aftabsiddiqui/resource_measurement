@@ -230,7 +230,7 @@ export class SimpleDataStore {
       console.log('Fetching data with axios streaming...');
       const response = await axios.get('https://ftp.ripe.net/pub/stats/ripencc/nro-stats/latest/nro-delegated-stats', {
         headers: {
-          'User-Agent': 'curl/8.0.0',
+          'User-Agent': 'curl',
           'Accept': 'text/plain, application/octet-stream',
           'Cache-Control': 'no-cache'
         },

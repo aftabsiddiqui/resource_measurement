@@ -70,6 +70,7 @@ export default function Home() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
+      // Try to get data directly - this will trigger initialization if needed
       const response = await fetch('/api/delegations?rir=ARIN&country=US&yearStart=2024&yearEnd=2024', {
         signal: controller.signal
       });
@@ -80,13 +81,13 @@ export default function Home() {
       if (result.success && result.data && result.data.length > 0) {
         setDataStatus(`Data ready (${result.data.length} records available)`);
       } else {
-        setDataStatus("No data available - initializing in background");
+        setDataStatus("Server ready - fetching data in background");
       }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         setDataStatus("Data service timeout - retrying...");
       } else {
-        setDataStatus("Data service initializing...");
+        setDataStatus("Server starting up...");
       }
     }
   };

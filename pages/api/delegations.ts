@@ -1,6 +1,59 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { SimpleDataStore } from '../../lib/simpleDataStore';
 
+// Track initialization state
+let isInitialized = false;
+let initializationPromise: Promise<void> | null = null;
+
+// Auto-initialize background services
+async function ensureInitialized(): Promise<void> {
+  if (isInitialized) {
+    return;
+  }
+
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  initializationPromise = performInitialization();
+  await initializationPromise;
+}
+
+async function performInitialization(): Promise<void> {
+  try {
+    console.log('🚀 Auto-initializing server services on first API call...');
+    
+    // Dynamic import to avoid client-side bundling
+    const { cronService } = await import('../../lib/cronService');
+    
+    // Start the daily data fetch cron job
+    cronService.startDailyDataFetch();
+    console.log('⏰ Daily cron job started (runs at 2 AM UTC)');
+    
+    // Run initial data fetch in background (don't block API response)
+    setImmediate(async () => {
+      try {
+        console.log('📊 Running initial data fetch...');
+        const result = await SimpleDataStore.fetchAndStoreData();
+        
+        if (result.success) {
+          console.log(`✅ Initial data fetch completed. Records: ${result.recordsCount}`);
+        } else {
+          console.warn(`⚠️  Initial data fetch failed: ${result.error}`);
+        }
+      } catch (error) {
+        console.error('❌ Error in background data fetch:', error);
+      }
+    });
+    
+    isInitialized = true;
+    console.log('✅ Auto-initialization completed');
+    
+  } catch (error) {
+    console.error('❌ Error during auto-initialization:', error);
+  }
+}
+
 // Increase response limit for large delegation data
 export const config = {
   api: {
@@ -43,6 +96,9 @@ export default async function handler(
   }
 
   try {
+    // Auto-initialize on first API call
+    await ensureInitialized();
+    
     const { rir, country, yearStart, yearEnd } = req.query;
 
     // Validate required parameters
