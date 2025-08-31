@@ -1,0 +1,86 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose up",
+			"type": "shell",
+			"command": "docker-compose up --build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
