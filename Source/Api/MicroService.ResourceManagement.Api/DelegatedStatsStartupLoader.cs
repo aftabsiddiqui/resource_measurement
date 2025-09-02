@@ -1,9 +1,5 @@
 using MicroService.ResourceManagement.Api.Database;
 using MicroService.ResourceManagement.Api.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MicroService.ResourceManagement.Api
 {

@@ -1,12 +1,11 @@
-version: '3.8'
 
 networks:
   appnet:
     driver: bridge
 
 services:
-  backend:
-    build: .
+  api:
+    build: ./Api/MicroService.ResourceManagement.Api
     ports:
       - "5000:8080"
     environment:
