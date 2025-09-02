@@ -1,5 +1,5 @@
-using Backend.Data;
-using Backend.Models;
+using MicroService.ResourceManagement.Api.Database;
+using MicroService.ResourceManagement.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Net.Http;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 
-namespace Backend.Services
+namespace MicroService.ResourceManagement.Api.Services
 {
     public class DelegatedStatService
     {

@@ -1,10 +1,10 @@
-using Backend.Models;
-using Backend.Services;
+using MicroService.ResourceManagement.Api.Models;
+using MicroService.ResourceManagement.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Backend.Controllers
+namespace MicroService.ResourceManagement.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

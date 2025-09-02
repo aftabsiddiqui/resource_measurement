@@ -1,11 +1,12 @@
-using Backend.Data;
+using MicroService.ResourceManagement.Api.Database;
+using MicroService.ResourceManagement.Api.Services;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
-builder.Services.AddDbContext<Backend.Data.ResourceDbContext>(options =>
+builder.Services.AddDbContext<ResourceDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<Backend.Services.DelegatedStatService>();
+builder.Services.AddScoped<DelegatedStatService>();
 builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {

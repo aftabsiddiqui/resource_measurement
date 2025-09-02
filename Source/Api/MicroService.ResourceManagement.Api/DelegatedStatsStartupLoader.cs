@@ -1,4 +1,5 @@
-using Backend.Services;
+using MicroService.ResourceManagement.Api.Database;
+using MicroService.ResourceManagement.Api.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace Backend
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<Data.ResourceDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ResourceDbContext>();
             dbContext.Database.EnsureCreated();
             var statService = scope.ServiceProvider.GetRequiredService<DelegatedStatService>();
             await statService.FetchAndStoreStatsAsync();

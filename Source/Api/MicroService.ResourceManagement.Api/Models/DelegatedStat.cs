@@ -1,11 +1,10 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Backend.Models
+namespace MicroService.ResourceManagement.Api.Models
 {
     public class DelegatedStat
     {
-        [Key]
         public int Id { get; set; }
         public string Rir { get; set; }
         public string Country { get; set; }
@@ -15,5 +14,6 @@ namespace Backend.Models
         public DateTime Date { get; set; }
         public string Status { get; set; }
         public string Entity { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }
