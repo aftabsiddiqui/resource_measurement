@@ -17,6 +17,8 @@ namespace Backend
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<Data.ResourceDbContext>();
+            dbContext.Database.EnsureCreated();
             var statService = scope.ServiceProvider.GetRequiredService<DelegatedStatService>();
             await statService.FetchAndStoreStatsAsync();
         }

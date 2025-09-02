@@ -16,12 +16,6 @@ namespace Backend.Controllers
             _service = service;
         }
 
-        [HttpPost("fetch")]
-        public async Task<ActionResult<List<DelegatedStat>>> FetchAndStore()
-        {
-            var stats = await _service.FetchAndStoreStatsAsync();
-            return Ok(stats);
-        }
 
         [HttpGet]
         public async Task<ActionResult<List<DelegatedStat>>> GetAll()

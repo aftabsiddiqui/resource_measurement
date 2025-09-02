@@ -11,7 +11,7 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=ResourceDb;User=sa;Password=Your_password123;
+      - ConnectionStrings__DefaultConnection=Server=db;Database=ResourceDb;User=sa;Password=Your_password123;TrustServerCertificate=True;
     depends_on:
       - db
     networks:
@@ -28,15 +28,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - appnet
+    volumes:
+      - sqlserverdata:/var/opt/mssql
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000/api
-    depends_on:
-      - backend
     networks:
       - appnet
+volumes:
+  sqlserverdata:
