@@ -1,3 +1,4 @@
+using MicroService.ResourceManagement.Api;
 using MicroService.ResourceManagement.Api.Database;
 using MicroService.ResourceManagement.Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ builder.Services.AddControllers();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHostedService<Backend.DelegatedStatsStartupLoader>();
+builder.Services.AddHostedService<DelegatedStatsStartupLoader>();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();

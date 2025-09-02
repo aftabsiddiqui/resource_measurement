@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Backend
+namespace MicroService.ResourceManagement.Api
 {
     public class DelegatedStatsStartupLoader : IHostedService
     {
