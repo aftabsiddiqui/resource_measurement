@@ -43,4 +43,7 @@ app.UseCors("AllowAll");
 
 app.MapControllers();
 
+app.UseDefaultFiles(); // enables index.html as default
+app.UseStaticFiles();  // serve from wwwroot
+
 app.Run();

@@ -361,3 +361,6 @@ Release/NuGetBuild
 #Other Artifacts
 /Source/Docker-Compose/logs
 /Source/Docker-Compose/reports
+
+Source/Api/MicroService.ResourceManagement.Api/wwwroot/
+Source/Api/MicroService.ResourceManagement.Api/frontend/build/
