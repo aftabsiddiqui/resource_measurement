@@ -15,5 +15,6 @@ namespace MicroService.ResourceManagement.Api.Models
         public string Status { get; set; }
         public string Entity { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string InUseStatus { get; set; }
     }
 }

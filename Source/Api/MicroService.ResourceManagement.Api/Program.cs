@@ -1,13 +1,36 @@
 using MicroService.ResourceManagement.Api;
+using MicroService.ResourceManagement.Api.Config;
 using MicroService.ResourceManagement.Api.Database;
 using MicroService.ResourceManagement.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using NLog.Extensions.Logging;
 var builder = WebApplication.CreateBuilder(args);
+
+// Bind MyBackend section into ResourceManagementConfig
+var config = new ResourceManagementConfig();
+builder.Configuration.GetSection("ResourceManagementConfig").Bind(config);
+builder.Services.Add(new ServiceDescriptor(typeof(ResourceManagementConfig), config));
+
+//setup logging
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.ClearProviders();
+    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+    loggingBuilder.AddNLog();
+});
+
 // Add services to the container
 builder.Services.AddDbContext<ResourceDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<DelegatedStatService>();
+if (config.UseInMemoryData)
+{
+    builder.Services.AddSingleton<IDelegatedStatService, InMemoryDelegatedStatService>();
+}
+else
+{
+    builder.Services.AddScoped<IDelegatedStatService, DbDelegatedStatService>();
+}
 builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {
@@ -25,10 +48,13 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Apply migrations automatically
-using (var scope = app.Services.CreateScope())
+if (!config.UseInMemoryData)
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ResourceDbContext>();
-    dbContext.Database.Migrate(); // This applies any pending migrations
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ResourceDbContext>();
+        dbContext.Database.Migrate(); // This applies any pending migrations
+    }
 }
 
 // Configure the HTTP request pipeline.

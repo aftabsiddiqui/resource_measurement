@@ -12,17 +12,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.8" />
+    <PackageReference Include="NLog" Version="6.0.3" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="6.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <!-- Run npm install and build React before publishing -->
@@ -38,8 +47,6 @@
     <ItemGroup>
       <ClientDistFiles Include="$(ClientApp)\build\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(ClientDistFiles)"
-          DestinationFolder="wwwroot\%(RecursiveDir)"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ClientDistFiles)" DestinationFolder="wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

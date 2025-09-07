@@ -14,9 +14,9 @@ namespace MicroService.ResourceManagement.Api
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ResourceDbContext>();
-            dbContext.Database.EnsureCreated();
-            var statService = scope.ServiceProvider.GetRequiredService<DelegatedStatService>();
+            // var dbContext = scope.ServiceProvider.GetRequiredService<ResourceDbContext>();
+            // dbContext.Database.EnsureCreated();
+            var statService = scope.ServiceProvider.GetRequiredService<IDelegatedStatService>();
             await statService.FetchAndStoreStatsAsync();
         }
 

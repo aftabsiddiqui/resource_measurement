@@ -10,8 +10,8 @@ namespace MicroService.ResourceManagement.Api.Controllers
     [Route("api/[controller]")]
     public class DelegatedStatsController : ControllerBase
     {
-        private readonly DelegatedStatService _service;
-        public DelegatedStatsController(DelegatedStatService service)
+        private readonly DbDelegatedStatService _service;
+        public DelegatedStatsController(DbDelegatedStatService service)
         {
             _service = service;
         }

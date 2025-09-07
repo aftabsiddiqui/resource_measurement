@@ -53,6 +53,7 @@ namespace MicroService.ResourceManagement.Api.Database
                 entity.Property(e => e.Status).HasMaxLength(100);
                 entity.Property(e => e.Entity).HasMaxLength(100);
                 entity.Property(e => e.CreatedDate).IsRequired();
+                entity.Property(e => e.InUseStatus).HasMaxLength(100).IsRequired(false);
             });
         }
     }
